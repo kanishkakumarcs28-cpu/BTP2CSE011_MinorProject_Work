@@ -1,12 +1,15 @@
 import tensorflow as tf
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+import json
 from tensorflow.keras import layers, models
+DATASET_PATH = r"C:\Users\Kanishka Kumar\OneDrive\Desktop\plant-diseases-cnn\Dataset"
 
 img_size = 128
 batch = 32
 
 datagen = ImageDataGenerator(
-    rescale=1./255,
+    preprocessing_function=preprocess_input,
     validation_split=0.2,
     rotation_range=25,
     zoom_range=0.2,
@@ -14,17 +17,18 @@ datagen = ImageDataGenerator(
 )
 
 train = datagen.flow_from_directory(
-    "dataset",
+    DATASET_PATH,
     target_size=(img_size, img_size),
     batch_size=batch,
-    subset="training"
+    subset="training",
 )
+json.dump(train.class_indices, open("class_indices.json", "w"))
 
 val = datagen.flow_from_directory(
-    "dataset",
+    DATASET_PATH,
     target_size=(img_size, img_size),
     batch_size=batch,
-    subset="validation"
+    subset="validation",
 )
 
 from tensorflow.keras.applications import MobileNetV2
@@ -50,5 +54,9 @@ model.compile(optimizer='adam',
               loss='categorical_crossentropy',
               metrics=['accuracy'])
 
-model.fit(train, validation_data=val, epochs=5)
+history = model.fit(train, validation_data=val, epochs=25)
+
+import pickle
+pickle.dump(history.history, open("history.pkl", "wb"))
+
 model.save("plant_disease_model.keras")
