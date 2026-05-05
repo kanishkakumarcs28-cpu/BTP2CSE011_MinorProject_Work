@@ -1,26 +1,32 @@
+import json
 import sys
 import numpy as np
 from tensorflow.keras.models import load_model
 from tensorflow.keras.preprocessing import image
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+
+# paths
+MODEL_PATH = r"C:\Users\Kanishka Kumar\OneDrive\Desktop\plant-diseases-cnn\plant_disease_model.keras"
 
 img_size = 128
 
-# model load
-model = load_model("model.h5")
+# load model
+model = load_model(MODEL_PATH)
 
-# classes (dataset folder se automatically)
-import os
-class_names = list(model.class_names) if hasattr(model, "class_names") else sorted(os.listdir("dataset"))
+# load class names (same order as training)
+class_indices = json.load(open("class_indices.json"))
+class_names = list(class_indices.keys())
 
-# image path command line se lo
+# image from command line
 img_path = sys.argv[1]
 
-# image load
+# preprocess image (same as training)
 img = image.load_img(img_path, target_size=(img_size, img_size))
 img_array = image.img_to_array(img)
-img_array = np.expand_dims(img_array, axis=0) / 255.0
+img_array = np.expand_dims(img_array, axis=0)
+img_array = preprocess_input(img_array)
 
-# prediction
+# predict
 prediction = model.predict(img_array)
 predicted_class = class_names[np.argmax(prediction)]
 
